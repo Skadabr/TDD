@@ -1,163 +1,244 @@
-var priceSchema, tribunes, sectors;
+var priceSchema, stadium, availablityRow;
 function initData() {
 
-    tribunes = [
-        {
-            name: 'west',
-            sectors: ['1', '2', '3']
-        },
-        {
-            name: 'north',
-            sectors: ['4', '5', '6']
-        },
-        {
-            name: 'east',
-            sectors: ['7', '8', '9']
-        }
-    ];
-
-    priceSchema = {
-        sectors: [
-            {
-                name: '1',
-                price: 10
-            }, {
-                name: '2',
-                price: 20
-            }
-        ]
-    };
-
-    sectors = [
-        {
-            name: '1',
+    //noinspection JSAnnotator
+  stadium = {
+      tribune_north: {
+        name: 'north',
+        sector_10: {
+          name: '10',
             rows: [
-                {
-                    name: '1',
-                    seats: [
-                        {
-                            name: '1'
-                        }, {
-                            name: '2',
-                        }, {
-                            name: '3',
-                        }, {
-                            name: '4',
-                        }, {
-                            name: '5',
-                        }
-                    ]
-                }, {
-                    name: '2',
-                }, {
-                    name: '3',
-                }, {
-                    name: '4',
-                }, {
-                    name: '5',
-                }
+              {
+                name: '00',
+                seats: '16'
+              },
+              {
+                name: '01',
+                seats: '25'
+              }
             ]
         }
-    ]
-
-
-}
-
-
-function setSectorPrice(sectorName, price) {
-    if (getSectorPriceBySectorName(sectorName)) {
-        priceSchema.sectors = priceSchema.sectors.filter(sector => sector.name != sectorName)
+      },
+      tribune_west: {
+        name: 'west',
+          sector_1: {
+          name: '1',
+            rows: [
+              {
+                name: '00',
+                seats: '16'
+              },
+              {
+                name: '01',
+                seats: '25'
+              },
+              {
+                name: '02',
+                seats: '25'
+              }
+            ]
+        }
+      },tribune_east: {
+      name: 'east',
+      sector_21: {
+        name: '21',
+        rows: [
+          {
+            name: '00',
+            seats: '16'
+          },
+          {
+            name: '01',
+            seats: '25'
+          }
+        ]
+      }
     }
-    priceSchema.sectors.push({name: sectorName, price: price});
+  };
+
+    priceSchema = {
+        tribune_north: {
+            name: 'north',
+          price: '20',
+          available: true,
+          sector_10: {
+            name: '10',
+            available: true
+          }
+        },
+        tribune_east: {
+          name: 'east',
+          available: true,
+          sector_21: {
+            name: '21',
+            price: '30',
+            available: true
+          },
+          sector_22: {
+            name: '22',
+            price: '10',
+            available: true
+          }
+        }
+    };
+
+  availablityRow = {
+    sector_1: {
+        name: '1',
+      rows: [
+        {
+            name: '00',
+          available: true
+        }
+      ]
+    },
+    sector_10: {
+      name: '10',
+      rows: [
+        {
+          name: '00',
+          available: true
+        }
+      ]
+    },
+    sector_21: {
+      name: '21',
+      rows: [
+        {
+          name: '00',
+          available: true
+        }
+      ]
+    }
+  }
 }
 
-function getSectorPriceBySectorName(sectorName) {
-    let [ sector ] = priceSchema.sectors.filter(sector => sector.name === sectorName);
-    if (sector) return sector.price;
+
+function setSectorPrice(tribuneName, sectorName, price) {
+    if (!priceSchema['tribune_'+tribuneName]) {
+      priceSchema['tribune_'+tribuneName] = { name: tribuneName, available: false };
+    }
+    priceSchema['tribune_'+tribuneName]['sector_'+sectorName] = Object.assign({}, {name: sectorName, price: price, available: true});
+}
+
+function getSectorPrice(tribuneName, sectorName) {
+    let sector = priceSchema['tribune_'+tribuneName] ? priceSchema['tribune_'+tribuneName]['sector_'+sectorName] : false,
+        tribunePrice = getTribunePrice(tribuneName);
+
+     if (!sector) return false;
+    if (sector && sector.price) return sector.price;
+    if (tribunePrice) return tribunePrice;
     return false;
 }
 
-function getTribuneBySector(sector) {
+/*function getTribuneBySector(sector) {
     let [ tribune ] = tribunes.filter(tribune => tribune.sectors.includes(sector));
     return tribune.name;
+}*/
+
+function setTribunePrice(tribuneName, price) {
+  if (priceSchema['tribune_' + tribuneName]) {
+    priceSchema['tribune_' + tribuneName].price = price;
+    priceSchema['tribune_' + tribuneName].available = true;
+  } else {
+    priceSchema['tribune_' + tribuneName] = Object.assign({}, {
+      name: tribuneName,
+      price: price,
+      available: true
+    });
+  }
 }
 
-function setTribunePrice(tribune, price) {
+function getTribunePrice(tribuneName) {
+  if (priceSchema['tribune_'+tribuneName] && priceSchema['tribune_'+tribuneName].available) {
+      return priceSchema['tribune_'+tribuneName].price;
+  }
+  return false;
 }
-
-function getTribunePrice(tribune, price) {
-}
-
+/*
 function setSectorAvailable(sectorName) {
 }
 
 function getSectorAvailable(sectorName) {
-}
+}*/
 
 function setSectorRowAvailable(sectorName, rowName) {
+  if (availablityRow['sector_'+sectorName]) {
+    availablityRow['sector_'+sectorName].rows = availablityRow['sector_'+sectorName].rows.filter(row => row.name !== rowName);
+
+      availablityRow['sector_'+sectorName].rows.push({name: rowName, available: true});
+  } else {
+    availablityRow['sector_'+sectorName] = { name: rowName, rows: [] };
+    availablityRow['sector_'+sectorName].rows.push({name: rowName, available: true});
+  }
 }
 
 function getSectorRowAvailable(sectorName, rowName) {
+if (availablityRow['sector_'+sectorName]) {
 
+    return !!availablityRow['sector_'+sectorName].rows.filter(row => row.name === rowName).length;
+}
+return false;
 }
 
-function getSectorDataForRender(sectorName) {
-
+function getSectorDataForRender(tribuneName, sectorName) {
+let rows = stadium['tribune_'+tribuneName]['sector_'+sectorName].rows;
+  return rows.map(row => Object.assign({}, {
+  name: row.name,
+  seats: row.seats,
+  available: getSectorRowAvailable(sectorName, row.name)
+}));
 }
 
 
 test('get sector 1 data for render sector page', () => {
     initData();
-    setSectorAvailable('1');
-    setTribunePrice('west', 20);
-    setSectorRowAvailable('1','1');
-    expect(getSectorDataForRender('1')).toEqual({
-        name: '1',
-        rows: [
-            {
-                name: '1',
-                seats: [
-                    {
-                        name: '1'
-                    }, {
-                        name: '2',
-                    }, {
-                        name: '3',
-                    }, {
-                        name: '4',
-                    }, {
-                        name: '5',
-                    }
-                ]
-            }
-        ]
-    });
+    //setSectorAvailable('1');
+    //setTribunePrice('west', true, 20);
+    setSectorRowAvailable('1','00');
+    expect(getSectorDataForRender('west', '1')).toEqual([
+      {
+        name: '00',
+        seats: '16',
+        available: true
+      },
+      {
+        name: '01',
+        seats: '25',
+        available: false
+      },
+      {
+        name: '02',
+        seats: '25',
+        available: false
+      }
+    ]);
 });
 
 test('If I set tribune price then all children sectors shoud have this price', () => {
     initData();
-    setTribunePrice('north', 20);
-    expect(getSectorPriceBySectorName('4')).toBe(20);
-    expect(getSectorPriceBySectorName('5')).toBe(20);
-    expect(getSectorPriceBySectorName('6')).toBe(20);
+    setTribunePrice('north', 30);
+    expect(getSectorPrice('north','10')).toBe(30);
+    expect(getSectorPrice('north','11')).toBeFalsy();
+    //expect(getSectorPrice('6')).toBe(20);
 });
 
 
 test('set plus getSectorPriceBySectorName', () => {
     initData();
-    setSectorPrice('1', 20);
-    expect(getSectorPriceBySectorName('1')).toBe(20);
+    setSectorPrice('east', '21',  50);
+    expect(getSectorPrice('east', '21')).toBe(50);
 });
 
 test('getSectorPriceBySectorName', () => {
     initData();
-    expect(getSectorPriceBySectorName('1')).toBe(10);
+    expect(getSectorPrice('north', '10')).toBe('20');
 });
 
-test('getSectorPriceBySectorName for non existent record', () => {
-   expect(getSectorPriceBySectorName('3')).toBe(false);
+test('getSectorPrice for non existent record', () => {
+   expect(getSectorPrice('north', '11')).toBe(false);
 });
-
+/*
 test('getTribuneBySector', () => {
     expect(getTribuneBySector('1')).toBe('west');
     expect(getTribuneBySector('2')).toBe('west');
@@ -169,3 +250,4 @@ test('getTribuneBySector', () => {
     expect(getTribuneBySector('8')).toBe('east');
     expect(getTribuneBySector('9')).toBe('east');
 });
+*/
